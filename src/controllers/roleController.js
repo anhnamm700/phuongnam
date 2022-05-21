@@ -4,10 +4,30 @@ import {
     getRolesearch,
     createNewRole,
     updateRoleData,
-    deleteRole
+    deleteRole,
+    checkRole,
+    checkDeleteRole
 } from "../services/roleService";
 import { PAGE_SIZE } from "../PageSize";
 
+const handleCheckDeleteRole = async(req, res) => {
+    let id = req.params.id;
+
+    if (!id) {
+        return res.status(200).json({
+            errCode: 1,
+            errMessage: 'Role not found',
+        });
+    }
+
+    let roles = await checkDeleteRole(id);
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        roles
+    });
+}
 
 const handleGetAllRole = async(req, res) => {
     let page = 1;
@@ -81,6 +101,8 @@ const handleGetRoleSearch = async(req, res) => {
 const handleCreateNewRole = async(req, res) => {
     let newRole = await createNewRole(req.body);
 
+    console.log(newRole);
+
     return res.status(200).json(newRole);
 }
 
@@ -90,6 +112,33 @@ const handleUpdateRole = async(req, res) => {
     let message = await updateRoleData(id, data);
 
     return res.status(200).json(message);
+}
+
+
+const handleCheckRole = async(req, res) => {
+    let name = req.params.name;
+
+    // if (!name) {
+    //     return res.status(500).json({
+    //         errCode: 1,
+    //         errMessage: 'Role is not find',
+    //     });
+    // }
+
+    let role = await checkRole(name);
+
+    if (!role) {
+        return res.status(200).json({
+            errCode: 1,
+            errMessage: 'Role not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        role
+    });
 }
 
 
@@ -117,5 +166,7 @@ module.exports = {
     handleGetRoleSearch,
     handleCreateNewRole,
     handleUpdateRole,
-    handleDeleteRole
+    handleDeleteRole,
+    handleCheckRole,
+    handleCheckDeleteRole
 }

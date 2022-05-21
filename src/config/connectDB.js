@@ -5,7 +5,11 @@ const { Sequelize } = require('sequelize');
 const sequelize = new Sequelize('ecommerce', 'root', null, {
   host: 'localhost',
   dialect: 'mysql',
-  logging: false
+  logging: false,
+  define: {
+        timestamps: false,
+        underscored: true,
+    }
 });
 
 const connectDB = async() => {

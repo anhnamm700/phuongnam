@@ -4,7 +4,7 @@ import {
     getBannersearch,
     createNewBanner,
     updateBannerData,
-    deleteBanner
+    deleteBanner,
 } from "../services/bannerService";
 import { PAGE_SIZE } from "../PageSize";
 
@@ -22,7 +22,8 @@ const handleGetAllBanner = async(req, res) => {
     return res.status(200).json({
         errCode: 0,
         errMessage: 'Ok',
-        Banners
+        Banners,
+        total_page: Math.ceil(Banners.countBanner[0].count / PAGE_SIZE)
     });
 }
 

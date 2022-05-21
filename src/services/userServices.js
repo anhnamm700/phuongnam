@@ -1,5 +1,8 @@
 import db from "../models/index";
 import bcrypt from 'bcryptjs/dist/bcrypt';
+import jwt from 'jsonwebtoken';
+import { QueryTypes } from "sequelize";
+
 
 let salt = bcrypt.genSaltSync(10);
 
@@ -12,6 +15,8 @@ const userHandleLogin = (email, password) => {
             let isExist = await checkUserEmail(email);
 
             if (isExist) {
+ 
+                
                 
                 let user = await db.User.findOne({
                     where: {email: email},
@@ -29,13 +34,30 @@ const userHandleLogin = (email, password) => {
                         userData.errMessage = 'Password is Valid';
                         delete user.password;
                         userData.data = user;
+
+                        const accessToken = jwt.sign({
+                            id: user.id,
+                            admin: user.roleId === "1" ? true : false
+                        },
+                        process.env.JWT_ACCESS_KEY,
+                        { expiresIn: "365d" });
+
+                        const refreshToken = jwt.sign({
+                            id: user.id,
+                            admin: user.roleId === "1" ? true : false
+                        },
+                        process.env.JWT_REFRESH_KEY,
+                        { expiresIn: "365d" });
+
+                        userData.accessToken = accessToken;
+                        userData.refreshToken = refreshToken;
                     } else {
                         userData.errCode = 3;
                         userData.errMessage = `Wrong Password`;
                     }
                 } else {
                     userData.errCode = 2;
-                    userData.errMessage = `User not found`;
+                    userData.errMessage = `User not found`; 
                 }
             } else {
                 userData.errCode = 1;
@@ -68,25 +90,23 @@ const checkUserEmail = (userEmail) => {
     })
 }
 
-const getAllUser = (pageSize, page) => {
+const getAllUser = (pageSize, page, id) => {
     return new Promise(async(resolve, reject) => {
-        try {
-            let userOffset = (page - 1) * pageSize;
+        try { 
+            let offsetCategory = (page - 1) * pageSize;
 
-            let users = await db.User.findAndCountAll({
-                attributes: {
-                    exclude: ['password']
-                },
-                offset: userOffset,
-                limit: pageSize
-            });
+            let countUser = await db.sequelize.query(`SELECT COUNT(id) as count from users where roleId=${id}`, { type: QueryTypes.SELECT })
 
-            resolve(users);
+            let users = await db.sequelize.query(`SELECT users.*, roles.name as role_name FROM users LEFT JOIN roles ON users.roleId = roles.id where users.roleId=${id} ORDER BY users.id LIMIT ${pageSize} OFFSET ${offsetCategory}`, { type: QueryTypes.SELECT })
+
+            resolve({users, countUser});
         } catch (error) {
             reject(error);
         }
     });
 }
+
+
 
 const getUserById = (id) => {
     return new Promise(async(resolve, reject) => {
@@ -210,9 +230,8 @@ const updateUserData = (data) => {
                 user.firstName = data.firstName,
                 user.lastName = data.lastName,
                 user.address =  data.address,
-                user.gender =  data.gender === 'Nam' ? 1 : 0,
+                user.gender =  data.gender,
                 user.userName = data.userName,
-                user.password = data.password,
                 user.phoneNumber =  data.phoneNumber,
                 user.roleId =  data.roleId,
                 user.image =  data.image,

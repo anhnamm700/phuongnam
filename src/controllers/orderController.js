@@ -4,7 +4,10 @@ import {
     getOrderSearch,
     createNewOrder,
     updateOrderData,
-    deleteOrder
+    deleteOrder,
+    getOrderByUser,
+    getMonthOrder,
+    getOrderUserId
 } from "../services/orderService";
 import { PAGE_SIZE } from "../PageSize";
 
@@ -22,6 +25,23 @@ const handleGetAllOrder = async(req, res) => {
         errCode: 0,
         errMessage: 'Ok',
         orders
+    });
+}
+
+const handleGetOrderUser = async(req, res) => {
+    let page = 1;
+    if (req.query.page) {
+        page = req.query.page;
+        page = parseInt(page);
+    }
+
+    let orders = await getOrderUserId(PAGE_SIZE, page);
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        orders,
+        total_page: Math.ceil(orders.countOrder[0].count / PAGE_SIZE)
     });
 }
 
@@ -47,12 +67,67 @@ const handleGetOrderById = async(req, res) => {
     return res.status(200).json({
         errCode: 0,
         errMessage: 'Ok',
-        Order
+        order
+    });
+}
+
+const handleGetOrderByUserId = async(req, res) => {
+    let id = req.params.id;
+
+    if (!id) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Order not found',
+        });
+    }
+
+    let order = await getOrderByUser(id);
+
+    if (!order) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Order not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        order
+    });
+}
+
+
+const handleGetMonthOrder = async(req, res) => {
+    // let month  = req.params.month;
+
+    // if (!month) {
+    //     return res.status(500).json({
+    //         errCode: 1,
+    //         errMessage: 'Order not found',
+    //     });
+    // }
+
+    let order = await getMonthOrder();
+
+    if (!order) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Order not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        order
     });
 }
 
 const handleGetOrderSearch = async(req, res) => {
     let id = req.params.id;
+
+    console.log(id);
 
     if (!id) {
         return res.status(500).json({
@@ -116,5 +191,8 @@ module.exports = {
     handleGetOrderSearch,
     handleCreateNewOrder,
     handleUpdateOrder,
-    handleDeleteOrder
+    handleDeleteOrder,
+    handleGetOrderByUserId,
+    handleGetMonthOrder,
+    handleGetOrderUser
 }

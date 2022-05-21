@@ -4,9 +4,22 @@ import {
     getBrandsearch,
     createNewBrand,
     updateBrandData,
-    deleteBrand
+    deleteBrand,
+    getBrandByCateId,
+    checkCountPtoduct,
+    getAllBrandWithout
 } from "../services/brandService";
 import { PAGE_SIZE } from "../PageSize";
+
+const handleGetAllBrandWithout = async(req, res) => {
+    let brands = await getAllBrandWithout();
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        brands
+    });
+}
 
 
 const handleGetAllBrand = async(req, res) => {
@@ -22,6 +35,62 @@ const handleGetAllBrand = async(req, res) => {
     return res.status(200).json({
         errCode: 0,
         errMessage: 'Ok',
+        brands,
+        total_page: Math.ceil(brands.countBrand[0].count / PAGE_SIZE)
+    });
+}
+
+const handleCheckProduct = async(req, res) => {
+    let id = req.params.id;
+
+    if (!id) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Brands not found',
+        });
+    }
+
+    let brands = await checkCountPtoduct(id);
+
+    if (!brands) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Brands not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        brands
+    });
+}
+
+
+const handleGetBrandsByCateId = async(req, res) => {
+    let id = req.params.id;
+
+    console.log(id);
+
+    if (!id) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Brands not found',
+        });
+    }
+
+    let brands = await getBrandByCateId(id);
+
+    if (!brands) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'Brands not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
         brands
     });
 }
@@ -32,7 +101,7 @@ const handleGetBrandById = async(req, res) => {
     if (!id) {
         return res.status(500).json({
             errCode: 1,
-            errMessage: 'Brandfi not found',
+            errMessage: 'Brand not found',
         });
     }
 
@@ -117,5 +186,8 @@ module.exports = {
     handleGetBrandSearch,
     handleCreateNewBrand,
     handleUpdateBrand,
-    handleDeleteBrand
+    handleDeleteBrand,
+    handleGetBrandsByCateId,
+    handleCheckProduct,
+    handleGetAllBrandWithout
 }

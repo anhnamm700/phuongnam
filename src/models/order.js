@@ -11,6 +11,24 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+
+      Orders.belongsTo(models.User, {
+        foreignKey: 'user_id',
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT'
+      });
+
+      Orders.belongsTo(models.Transports, {
+        foreignKey: 'transport_id',
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT'
+      });
+
+      Orders.hasMany(models.OrderDetails, {
+        foreignKey: 'order_id',
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT'
+      });
     }
   };
   Orders.init({
@@ -20,7 +38,8 @@ module.exports = (sequelize, DataTypes) => {
     title: DataTypes.STRING,
     total_Orders: DataTypes.INTEGER,
     note: DataTypes.TEXT,
-    voucher_id: DataTypes.INTEGER
+    voucher_id: DataTypes.INTEGER,
+    transport_id: DataTypes.INTEGER,
   }, {
     sequelize,
     modelName: 'Orders',

@@ -4,9 +4,28 @@ import {
     getOrderDetailSearch,
     createNewOrderDetail,
     updateOrderDetailData,
-    deleteOrderDetail
+    deleteOrderDetail,
+    getMostBoutProducts,
+    getMoneyByMonth
 } from "../services/orderDetailService";
 import { PAGE_SIZE } from "../PageSize";
+
+const handleGetMoneyByMonth = async(req, res) => {
+    let orderDetail = await getMoneyByMonth();
+
+    if (!orderDetail) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'OrderDetail not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        orderDetail
+    });
+}
 
 
 const handleGetAllOrderDetail = async(req, res) => {
@@ -56,6 +75,7 @@ const handleGetOrderDetailById = async(req, res) => {
 const handleGetOrderDetailSearch = async(req, res) => {
     let id = req.params.id;
 
+
     if (!id) {
         return res.status(500).json({
             errCode: 1,
@@ -64,6 +84,24 @@ const handleGetOrderDetailSearch = async(req, res) => {
     }
 
     let orderDetail = await getOrderDetailSearch(id);
+
+    if (!orderDetail) {
+        return res.status(500).json({
+            errCode: 1,
+            errMessage: 'OrderDetail not found',
+        });
+    }
+
+    return res.status(200).json({
+        errCode: 0,
+        errMessage: 'Ok',
+        orderDetail
+    });
+}
+
+const handleGetMostProduct = async(req, res) => {
+    let month = req.params.month;
+    let orderDetail = await getMostBoutProducts(month);
 
     if (!orderDetail) {
         return res.status(500).json({
@@ -118,5 +156,7 @@ module.exports = {
     handleGetOrderDetailSearch,
     handleCreateNewOrderDetail,
     handleUpdateOrderDetail,
-    handleDeleteOrderDetail
+    handleDeleteOrderDetail,
+    handleGetMostProduct,
+    handleGetMoneyByMonth
 }

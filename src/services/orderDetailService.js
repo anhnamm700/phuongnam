@@ -1,11 +1,14 @@
 import db from "../models/index";
 import { Op } from "sequelize";
+import { QueryTypes } from "sequelize";
+
+import emailService from "./emailService";
 
 const getAllOrderDetail = (pageSize, page, orderId) => {
     return new Promise(async(resolve, reject) => {
         try {
             let offsetOrder = (page - 1) * pageSize;
-
+ 
             let orderDetail = db.OrderDetails.findAndCountAll({
                 where: { order_id: orderId },
                 offset: offsetOrder,
@@ -40,9 +43,41 @@ const getOrderDetailById = (id) => {
 const getOrderDetailSearch = (id) => {
     return new Promise(async(resolve, reject) => {
         try {
-            let orderDetail = await db.OrderDetails.findAndCountAll({
-                where: { id: id }
-            });
+            let orderDetail = await db.sequelize.query(`select orderdetails.*, orderstatus.name as status, products.name as product from orderdetails LEFT join orderstatus on orderdetails.order_status = orderstatus.id LEFT join products on orderdetails.product_id = products.id where orderdetails.order_id = '${id}'`, { type: QueryTypes.SELECT });
+
+            if (!orderDetail) { 
+                resolve(false);
+            }
+
+
+            resolve(orderDetail);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+ 
+const getMostBoutProducts = (month) => {
+    return new Promise(async(resolve, reject) => { 
+        try {
+            let orderDetail = await db.sequelize.query(`SELECT month(orderdetails.createdAt) as month,sum(total_price) as total, product_id, SUM(quantity) as quantity, name FROM orderdetails, products where orderdetails.product_id = products.id AND month(orderdetails.createdAt) = ${month} group by product_id Order by sum(quantity) desc`, { type: QueryTypes.SELECT });
+
+            if (!orderDetail) { 
+                resolve(false);
+            }
+
+
+            resolve(orderDetail);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+const getMoneyByMonth = () => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            let orderDetail = await db.sequelize.query("select year(createdAt) as year,month(createdAt) as month,sum(total_price) as total from orderdetails group by year(createdAt),month(createdAt) order by year(createdAt),month(createdAt);", { type: QueryTypes.SELECT });
 
             if (!orderDetail) { 
                 resolve(false);
@@ -57,15 +92,20 @@ const getOrderDetailSearch = (id) => {
 }
 
 const createNewOrderDetail = (data) => {
+    console.log(data);
     return new Promise(async(resolve, reject) => {
         try {
             await db.OrderDetails.create({
+                id: data.id,
                 product_id: data.product_id,
                 unit_price: data.unit_price,
                 quantity: data.quantity,
                 total_price: data.total_price,
                 order_id: data.order_id,
+                order_status: data.order_status
             });
+
+            await emailService.sendSimpleEmail(data.email, data.name, data.order_id);
 
             resolve({
                 errCode: 0,
@@ -99,6 +139,7 @@ const updateOrderDetailData = (id, data) => {
                 orderDetail.quantity = data.quantity,
                 orderDetail.total_price = data.total_price,
                 orderDetail.order_id = data.order_id,
+                orderDetail.order_status = data.order_status
 
                 await orderDetail.save();
 
@@ -162,5 +203,7 @@ module.exports = {
     getOrderDetailSearch,
     createNewOrderDetail,
     updateOrderDetailData,
-    deleteOrderDetail
+    deleteOrderDetail,
+    getMostBoutProducts,
+    getMoneyByMonth
 }

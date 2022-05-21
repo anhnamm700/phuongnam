@@ -2,17 +2,17 @@ import categoryServices from '../services/categoryServices';
 
 
 const handleGetAllCategory = async(req, res) => {
-    let id = req.body.id; //all || id
+    // let id = req.params.id; 
 
-    if (!id) {
-        return res.status(200).json({
-            errCode: 1,
-            errMessage: 'Missing ID parameter',
-            user: []    
-        });
-    }
+    // if (!id) {
+    //     return res.status(200).json({
+    //         errCode: 1,
+    //         errMessage: 'Missing ID parameter',
+    //         user: []    
+    //     });
+    // }
 
-    let cates = await categoryServices.getAllCategory(id);
+    let cates = await categoryServices.getAllCategory();
 
     return res.status(200).json({
         errCode: 0,
@@ -22,10 +22,10 @@ const handleGetAllCategory = async(req, res) => {
 }
 
 const handleGetCategoryBySlug = async(req, res) => {
-    let slug = req.params.slug;
+    let id = req.params.id;
     
-    if (slug) {
-        let category = await categoryServices.getCategoryBySlug(slug);
+    if (id) {
+        let category = await categoryServices.getCategoryBySlug(id);
 
         return res.status(200).json({
             errCode: 0,
@@ -39,6 +39,26 @@ const handleGetCategoryBySlug = async(req, res) => {
         errMessage: 'Category not found'
     });
 }
+
+const handleCheckBrand = async(req, res) => {
+    let id = req.params.id;
+    
+    if (id) {
+        let category = await categoryServices.checkBrand(id);
+
+        return res.status(200).json({
+            errCode: 0,
+            errMessage: 'OK',
+            category
+        });
+    }
+
+    return res.status(500).json({
+        errCode: 1,
+        errMessage: 'Category not found'
+    });
+}
+
 
 
 const handleCreateNewCategory = async(req, res) => {
@@ -55,7 +75,7 @@ const handleEditCategory = async(req, res) => {
     return res.status(200).json(message);
 }
 
-const handleDeleteCategory = async(req, res) => {
+const handleDeleteCategory = async(req, res) => { 
     let id = req.body.id;
 
     if (!id) {
@@ -75,5 +95,6 @@ module.exports = {
     handleGetCategoryBySlug,
     handleCreateNewCategory,
     handleEditCategory,
-    handleDeleteCategory
+    handleDeleteCategory,
+    handleCheckBrand
 }

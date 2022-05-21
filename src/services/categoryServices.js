@@ -1,20 +1,21 @@
 import db from "../models/index";
+import { QueryTypes } from "sequelize";
 
 
-const getAllCategory = (cateId) => {
+const getAllCategory = () => { 
     return new Promise(async(resolve, reject) => {
         try {
             let cates = '';
 
-            if (cateId === 'ALL') {
-                cates = await db.Categories.findAll();
-            } 
+            // if (cateId === 'ALL') {
+                cates = await db.sequelize.query("select * from categories", { type: QueryTypes.SELECT });
+            // } 
 
-            if (cateId && cateId !== 'ALL') {
-                cates = await db.Categories.findOne({
-                    where: {id: cateId}
-                });
-            }
+            // if (cateId && cateId !== 'ALL') {
+            //     cates = await db.Categories.findOne({
+            //         where: {id: cateId}
+            //     });
+            // }
 
             resolve(cates);
         } catch (error) {
@@ -23,13 +24,11 @@ const getAllCategory = (cateId) => {
     });
 }
 
-const getCategoryBySlug = (slug) => {
+const getCategoryBySlug = (id) => {
     return new Promise(async(resolve, reject) => {
         try {
-            if (slug) {
-                let category = db.Categories.findOne({
-                    where: { slug: slug }
-                });
+            if (id) {
+                let category = db.sequelize.query(`select * from categories where id=${id}`, { type: QueryTypes.SELECT });
     
                 resolve(category);
             }
@@ -48,22 +47,25 @@ const createNewCategory = (data) => {
             // Check email exist
             let checkName = await checkCategory(data.name);
 
-            if (checkName) {
+
+            if (!checkName) {
                 resolve({
                     errCode: 1,
                     errMessage: 'Category is already in used, try another category'
                 });
             } else {
-                await db.Categories.create({
-                    name: data.name,
-                    slug: hashSlug(data.name),
-                    icon: data.icon,
-                    avatar: data.avatar,
-                    is_active: data.is_active === '1' ? true : false,
-                    total_products: data.total_products,
-                    phoneNumber: data.phoneNumber,
-                    author_id: data.author_id
-                });
+                // await db.Categories.create({
+                //     name: data.name,
+                //     slug: hashSlug(data.name),
+                //     icon: data.icon,
+                //     avatar: data.avatar,
+                //     is_active: data.is_active === '1' ? true : false,
+                //     total_products: data.total_products,
+                //     phoneNumber: data.phoneNumber,
+                //     author_id: data.author_id
+                // });
+
+                await db.sequelize.query(`insert into categories (name, slug, is_active) values ('${data.name}', '${hashSlug(data.name)}', ${Number(data.is_active)})`);
             }
             
             resolve({
@@ -108,9 +110,7 @@ const hashSlug = (name) => {
 const deleteCategory = (id) => {
     return new Promise(async(resolve, reject) => {
         try {
-            let foundCategory = await db.Categories.findOne({
-                where: { id: id }
-            });
+            let foundCategory = await db.sequelize.query(`select * from categories where id=${id}`, { type: QueryTypes.SELECT })
     
             if (!foundCategory) {
                 resolve({
@@ -120,9 +120,7 @@ const deleteCategory = (id) => {
             } 
             
             if (foundCategory) {
-                await db.Categories.destroy({
-                    where: { id:id }
-                });
+                await db.sequelize.query(`delete from categories where id=${id}`, { type: QueryTypes.DELETE });
 
 
                 resolve({
@@ -149,24 +147,14 @@ const updateCategoryData = (id, data) => {
             } 
             
            
-            let category = await db.Categories.findOne({
-                where: { id: id },
-                raw: false
-            });
-
-            resolve(category);
-
+            let category = await db.sequelize.query(`select * from categories where id=${id}`, {  type: QueryTypes.SELECT  });
+            
             if (category) {
-                category.name = data.name,
-                category.slug = hashSlug(data.name),
-                category.icon = data.icon,
-                category.avatar = data.avatar,
-                category.is_active = data.is_active === '1' ? true : false,
-                category.total_products = data.total_products,
-                category.phoneNumber = data.phoneNumber,
-                category.author_id = data.author_id
+                // category.name = data.name,
+                // category.slug = hashSlug(data.name),
+                // category.is_active = data.is_active === 1 ? true : false,
 
-                await category.save();
+                await db.sequelize.query(`update categories set name='${data.name}', slug='${hashSlug(data.name)}', is_active=${data.is_active} where id=${id}`, {  type: QueryTypes.UPDATE  });
 
                 resolve({
                     errCode: 0,
@@ -189,9 +177,7 @@ const updateCategoryData = (id, data) => {
 const checkCategory = (name) => {
     return new Promise(async(resolve, reject) => {
         try {
-            let category = await db.Categories.findOne({
-                where: { name: name }
-            });
+            let category = await db.sequelize.query(`SELECT * FROM categories WHERE name LIKE '${name}';`, {  type: QueryTypes.SELECT  })
 
 
             if (category) {
@@ -207,11 +193,24 @@ const checkCategory = (name) => {
 }
 
 
+const checkBrand = async(id) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            let cates = await db.sequelize.query(`select COUNT(*) as count, categories.id from brands LEFT JOIN categories ON brands.category_id = categories.id where brands.category_id = ${id} GROUP BY brands.id`, { type: QueryTypes.SELECT });
+            resolve(cates);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+
 
 module.exports = {
     getAllCategory,
     getCategoryBySlug,
     createNewCategory,
     deleteCategory,
-    updateCategoryData
+    updateCategoryData,
+    checkBrand
 }

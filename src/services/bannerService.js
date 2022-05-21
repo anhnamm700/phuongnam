@@ -1,17 +1,16 @@
 import db from "../models/index";
-import { Op } from "sequelize";
+import { Op, QueryTypes } from "sequelize";
 
 const getAllBanner = (pageSize, page) => {
     return new Promise(async(resolve, reject) => {
         try {
-            let offsetOrder = (page - 1) * pageSize;
+            let offsetCategory = (page - 1) * pageSize;
 
-            let banners = db.Banners.findAndCountAll({
-                offset: offsetOrder,
-                limit: pageSize
-            });
+            let countBanner = await db.sequelize.query(`SELECT COUNT(id) as count from banners`, { type: QueryTypes.SELECT })
 
-            resolve(banners);
+            let banners = await db.sequelize.query(`SELECT * from banners LIMIT ${pageSize} OFFSET ${offsetCategory}`, { type: QueryTypes.SELECT })
+
+            resolve({banners, countBanner});
         } catch (error) {
             reject(error);
         }

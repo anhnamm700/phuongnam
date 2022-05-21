@@ -23,6 +23,9 @@ module.exports = {
       order_id: {
         type: Sequelize.STRING
       },
+      order_status: {
+        type: Sequelize.INTEGER
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

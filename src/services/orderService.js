@@ -1,5 +1,6 @@
 import db from "../models/index";
-import { Op } from "sequelize";
+import sequelize , { Op, QueryTypes } from "sequelize";
+// import Sequelize from "sequelize";
 
 const getAllOrder = (pageSize, page) => {
     return new Promise(async(resolve, reject) => {
@@ -36,11 +37,49 @@ const getOrderById = (id) => {
     });
 }
 
+const getOrderUserId = (pageSize, page) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            let offsetCategory = (page - 1) * pageSize;
+            let countOrder = await db.sequelize.query(`SELECT COUNT(id) as count from orders`, { type: QueryTypes.SELECT })
+
+            let order = await db.sequelize.query(`select orders.*, users.userName, transports.name as transport from orders left join users on orders.user_id = users.id left join transports on orders.transport_id = transports.id GROUP by orders.id DESC LIMIT ${pageSize} OFFSET ${offsetCategory}`, { type: QueryTypes.SELECT });
+
+            if (!order) {
+                resolve(false);
+            }
+
+            resolve({order, countOrder});
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+
 const getOrderSearch = (id) => {
     return new Promise(async(resolve, reject) => {
         try {
+            let order = await db.sequelize.query(`SELECT orderdetails.*, products.name as productName FROM orderdetails LEFT JOIN orders ON orderdetails.order_id = orders.id LEFT JOIN products on orderdetails.product_id = products.id WHERE orderdetails.order_id = '${id}' GROUP BY orderdetails.id`, { type: QueryTypes.SELECT });
+
+            if (!order) { 
+                resolve(false);
+            }
+
+
+            resolve(order);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+
+const getOrderByUser = (id) => {
+    return new Promise(async(resolve, reject) => {
+        try {
             let order = await db.Orders.findAll({
-                where: { id: id }
+                where: { user_id: id }
             });
 
             if (!order) { 
@@ -55,12 +94,38 @@ const getOrderSearch = (id) => {
     });
 }
 
-const createNewOrder = (data) => {
+
+const getMonthOrder = () => {
     return new Promise(async(resolve, reject) => {
         try {
-            const date = Date.now();
-            await db.Orders.create({
-                id: `DH${date}${data.user_id}`,
+            let order = await db.Orders.findAll({
+                attributes: {
+                    include: [
+                        'id',
+                        [sequelize.fn('MONTH', sequelize.col('createdAt')), 'Month']
+                    ]
+                },
+                distinct: 'id'
+            });
+ 
+            if (!order) {  
+                resolve(false);
+            }
+
+
+            resolve(order);
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+const createNewOrder = (data) => {
+    return new Promise(async(resolve, reject) => {
+        try { 
+            
+            await db.Orders.create({ 
+                id: data.id,
                 user_id: data.user_id,
                 total_price: data.total_price,
                 description: data.description,
@@ -68,6 +133,7 @@ const createNewOrder = (data) => {
                 total_Orders: data.total_Orders,
                 note: data.note,
                 voucher_id: data.voucher_id,
+                transport_id: data.transport_id	
             });
 
             resolve({
@@ -104,6 +170,7 @@ const updateOrderData = (id, data) => {
                 order.total_Orders = data.total_Orders,
                 order.note = data.note,
                 order.voucher_id = data.voucher_id,
+                order.transport_id = data.transport_id	
 
                 await order.save();
 
@@ -167,5 +234,8 @@ module.exports = {
     getOrderSearch,
     createNewOrder,
     updateOrderData,
-    deleteOrder
+    deleteOrder,
+    getOrderByUser,
+    getMonthOrder,
+    getOrderUserId
 }

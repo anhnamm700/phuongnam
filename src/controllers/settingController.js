@@ -15,12 +15,12 @@ const handleGetSetting = async(req, res) => {
         page = parseInt(page);
     }
 
-    let noties = await getSetting(PAGE_SIZE, page);
+    let setting = await getSetting(PAGE_SIZE, page);
 
     return res.status(200).json({
         errCode: 0,
         errMessage: 'Ok',
-        noties
+        setting
     });
 }
 

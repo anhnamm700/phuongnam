@@ -7,6 +7,7 @@ module.exports = {
         autoIncrement: false,
         primaryKey: true,
         type: Sequelize.STRING
+        
       },
       user_id: {
         type: Sequelize.INTEGER
@@ -27,6 +28,9 @@ module.exports = {
         type: Sequelize.TEXT
       },
       voucher_id: {
+        type: Sequelize.INTEGER
+      },
+      transport_id: {
         type: Sequelize.INTEGER
       },
       createdAt: {

@@ -11,6 +11,13 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      // Brands.belongsTo(models.Categories);
+
+      Brands.hasMany(models.Products, {
+        foreignKey: 'brand_id',
+        onDelete: 'RESTRICT',
+        onUpdate: 'RESTRICT'
+      });
     }
   };
   Brands.init({
